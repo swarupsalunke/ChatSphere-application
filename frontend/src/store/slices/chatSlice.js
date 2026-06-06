@@ -47,9 +47,15 @@ const chatSlice = createSlice({
       state.messages = action.payload;
     },
 
-    addMessage: (state, action) => {
-      state.messages.push(action.payload);
-    },
+   addMessage: (state, action) => {
+  const exists = state.messages.some(
+    (msg) => msg._id === action.payload._id
+  );
+
+  if (!exists) {
+    state.messages.push(action.payload);
+  }
+},
 
     deleteMessageById: (state, action) => {
       state.messages = state.messages.filter(
