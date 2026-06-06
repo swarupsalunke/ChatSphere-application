@@ -46,7 +46,7 @@ import { setStatuses, addStatus, removeStatus } from "../store/slices/statusSlic
 // 🔑 Apni Giphy API key yahan dalo
 const gf = new GiphyFetch("2wRT5NpcbdhP1SMRIwnF6EtAi7Usawnx");
 
-const socket = io("http://localhost:5000");
+const socket = io("https://chatsphere-application-2.onrender.com");
 
 // ── CHAT THEME PRESETS ──
 const COLOR_PRESETS = [
