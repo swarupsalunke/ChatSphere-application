@@ -15,8 +15,13 @@ const upload = multer({ storage });
 
 // upload route
 router.post("/", upload.single("file"), (req, res) => {
+  const baseUrl =
+    process.env.NODE_ENV === "production"
+      ? "https://chatsphere-application-2.onrender.com"
+      : "http://localhost:5000";
+
   res.json({
-    fileUrl: `http://localhost:5000/uploads/${req.file.filename}`,
+    fileUrl: `${baseUrl}/uploads/${req.file.filename}`,
   });
 });
 
