@@ -243,15 +243,15 @@ const Chat = () => {
 
   // ── NOTIFICATION PERMISSION ──
   useEffect(() => {
-  if (
-    typeof window !== "undefined" &&
-    "Notification" in window
-  ) {
-    if (Notification.permission !== "granted") {
-      Notification.requestPermission();
+    if (
+      typeof window !== "undefined" &&
+      "Notification" in window
+    ) {
+      if (Notification.permission !== "granted") {
+        Notification.requestPermission();
+      }
     }
-  }
-}, []);
+  }, []);
 
   // ── PROFILE UPDATED (socket) ──
   useEffect(() => {
@@ -282,24 +282,24 @@ const Chat = () => {
       }
 
       if (!selectedUser || selectedUser._id !== msg.sender) {
-  dispatch(incrementUnread(msg.sender));
+        dispatch(incrementUnread(msg.sender));
 
-  // Safe notification check
-  if (
-    typeof window !== "undefined" &&
-    "Notification" in window &&
-    Notification.permission === "granted"
-  ) {
-    new Notification("New Message", {
-      body: msg.content || "📎 File / Voice message",
-    });
-  }
+        // Safe notification check
+        if (
+          typeof window !== "undefined" &&
+          "Notification" in window &&
+          Notification.permission === "granted"
+        ) {
+          new Notification("New Message", {
+            body: msg.content || "📎 File / Voice message",
+          });
+        }
 
-  toast(`New message from ${msg.senderName || "Someone"}`, {
-    icon: "💬",
-    duration: 3000,
-  });
-}
+        toast(`New message from ${msg.senderName || "Someone"}`, {
+          icon: "💬",
+          duration: 3000,
+        });
+      }
     });
     return () => socket.off("receiveMessage");
   }, [selectedUser, user]);
@@ -559,7 +559,28 @@ const Chat = () => {
         file: fileUrl,
         replyTo: replyMessage?._id || null,
       });
+
+      // 👇 Immediately show message
+      dispatch(addMessage(msgRes.data));
+
+      const preview =
+        msgRes.data.content ||
+        (msgRes.data.file?.endsWith(".webm")
+          ? "🎤 Voice message"
+          : msgRes.data.file
+            ? "📎 File"
+            : "");
+
+      dispatch(
+        updateLastMessage({
+          userId: selectedUser._id,
+          msg: { ...msgRes.data, preview },
+        })
+      );
+
+      // 👇 Send to socket
       socket.emit("sendMessage", msgRes.data);
+
       setMessage("");
       setFile(null);
       dispatch(clearPreviewUrl());
@@ -764,70 +785,70 @@ const Chat = () => {
   };
 
   const acceptCall = async () => {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-    });
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
 
-    localStreamRef.current = stream;
+      localStreamRef.current = stream;
 
-    const pc = new RTCPeerConnection(servers);
+      const pc = new RTCPeerConnection(servers);
 
-    peerConnection.current = pc;
+      peerConnection.current = pc;
 
-    // local tracks
-    stream.getTracks().forEach((track) => {
-      pc.addTrack(track, stream);
-    });
+      // local tracks
+      stream.getTracks().forEach((track) => {
+        pc.addTrack(track, stream);
+      });
 
-    // remote audio
-    pc.ontrack = (event) => {
-      remoteAudioRef.current.srcObject = event.streams[0];
-    };
+      // remote audio
+      pc.ontrack = (event) => {
+        remoteAudioRef.current.srcObject = event.streams[0];
+      };
 
-    // ICE
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.emit("callSignal", {
-          to: incomingCall._id,
-          signal: {
-            candidate: event.candidate,
-          },
-        });
-      }
-    };
+      // ICE
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit("callSignal", {
+            to: incomingCall._id,
+            signal: {
+              candidate: event.candidate,
+            },
+          });
+        }
+      };
 
-    // set offer
-    await pc.setRemoteDescription(
-      new RTCSessionDescription(incomingSignal)
-    );
+      // set offer
+      await pc.setRemoteDescription(
+        new RTCSessionDescription(incomingSignal)
+      );
 
-    // create answer
-    const answer = await pc.createAnswer();
+      // create answer
+      const answer = await pc.createAnswer();
 
-    await pc.setLocalDescription(answer);
+      await pc.setLocalDescription(answer);
 
-    // send answer
-    socket.emit("callSignal", {
-      to: incomingCall._id,
-      signal: {
-        answer,
-      },
-    });
+      // send answer
+      socket.emit("callSignal", {
+        to: incomingCall._id,
+        signal: {
+          answer,
+        },
+      });
 
-    socket.emit("acceptCall", {
-      to: incomingCall._id,
-      by: user,
-    });
+      socket.emit("acceptCall", {
+        to: incomingCall._id,
+        by: user,
+      });
 
-    setIncomingCall(null);
+      setIncomingCall(null);
 
-    toast.success("Call connected");
+      toast.success("Call connected");
 
-  } catch (err) {
-    console.log(err);
-  }
-};
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   const rejectCall = () => {
     socket.emit("rejectCall", {
@@ -849,8 +870,8 @@ const Chat = () => {
   const validStatuses = statuses.filter((s) => is24hValid(s.createdAt));
 
   const myStatuses = validStatuses
-  .filter((s) => s.user && s.user._id === user?._id)
-  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    .filter((s) => s.user && s.user._id === user?._id)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   const otherStatusGroups = (() => {
     const map = {};
