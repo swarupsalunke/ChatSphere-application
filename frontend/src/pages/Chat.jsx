@@ -243,8 +243,15 @@ const Chat = () => {
 
   // ── NOTIFICATION PERMISSION ──
   useEffect(() => {
-    if (Notification.permission !== "granted") Notification.requestPermission();
-  }, []);
+  if (
+    typeof window !== "undefined" &&
+    "Notification" in window
+  ) {
+    if (Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+  }
+}, []);
 
   // ── PROFILE UPDATED (socket) ──
   useEffect(() => {
@@ -275,17 +282,24 @@ const Chat = () => {
       }
 
       if (!selectedUser || selectedUser._id !== msg.sender) {
-        dispatch(incrementUnread(msg.sender));
-        if (Notification.permission === "granted") {
-          new Notification("New Message", {
-            body: msg.content || "📎 File / Voice message",
-          });
-        }
-        toast(`New message from ${msg.senderName || "Someone"}`, {
-          icon: "💬",
-          duration: 3000,
-        });
-      }
+  dispatch(incrementUnread(msg.sender));
+
+  // Safe notification check
+  if (
+    typeof window !== "undefined" &&
+    "Notification" in window &&
+    Notification.permission === "granted"
+  ) {
+    new Notification("New Message", {
+      body: msg.content || "📎 File / Voice message",
+    });
+  }
+
+  toast(`New message from ${msg.senderName || "Someone"}`, {
+    icon: "💬",
+    duration: 3000,
+  });
+}
     });
     return () => socket.off("receiveMessage");
   }, [selectedUser, user]);
