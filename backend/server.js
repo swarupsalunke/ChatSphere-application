@@ -21,12 +21,15 @@ const app = express();
 const server = http.createServer(app);
 
 // Socket.IO setup
-const io = new Server(server, {
-  cors: {
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST"],
-  },
-});
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://chat-sphere-application.vercel.app/",
+    ],
+    credentials: true,
+  })
+);
 
 // Middleware
 app.use(express.json());
