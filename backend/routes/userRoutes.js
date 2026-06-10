@@ -32,6 +32,7 @@ router.post("/register", async (req, res) => {
       name: user.name,
       email: user.email,
       profilePic: user.profilePic,
+      fcmToken: user.fcmToken,  
     });
 
   } catch (error) {
@@ -56,6 +57,7 @@ router.post("/login", async (req, res) => {
         name: user.name,
         email: user.email,
         profilePic: user.profilePic, // 🔥 RETURN DP
+        fcmToken: user.fcmToken,        
       });
     } else {
       res
@@ -105,10 +107,27 @@ router.put("/profile/:id", async (req, res) => {
       name: updatedUser.name,
       email: updatedUser.email,
       profilePic: updatedUser.profilePic,
+      fcmToken: updatedUser.fcmToken,     
     });
 
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
+  }
+});
+
+router.put("/fcm-token/:id", async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { fcmToken: token },
+      { new: true }
+    );
+
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to save token" });
   }
 });
 
