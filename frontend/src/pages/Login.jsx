@@ -5,6 +5,8 @@ import { setUser } from "../store/slices/authSlice";
 import API from "../api/api";
 import toast, { Toaster } from "react-hot-toast";
 import { Mail, Lock, Eye, EyeOff, MessageCircle } from "lucide-react";
+import { getToken } from "firebase/messaging";
+import { messaging } from "../firebase";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -34,7 +36,23 @@ const Login = () => {
 
     try {
       const { data } = await API.post("/api/user/login", form);
-      dispatch(setUser(data));
+
+try {
+  const fcmToken = await getToken(messaging, {
+    vapidKey:
+      "BFbKEXjcEV5y3SMbSDd6f0Zv7Z59M7vVhE9OXPifAtSwdJ-m-1ZgIA9FMQdYRnDzaMTZ6i6xbsKVVinJD3kchwQ",
+  });
+
+  if (fcmToken) {
+    await API.put(`/api/user/fcm-token/${data._id}`, {
+      token: fcmToken,
+    });
+  }
+} catch (err) {
+  console.log("FCM save error:", err);
+}
+
+dispatch(setUser(data));
 
       toast.success("Welcome back!", { id: toastId });
 

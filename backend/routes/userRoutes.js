@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const { getMessaging } = require("../config/firebaseAdmin");
 
 
 // 🔥 REGISTER
@@ -128,6 +129,37 @@ router.put("/fcm-token/:id", async (req, res) => {
     res.json({ success: true, user });
   } catch (err) {
     res.status(500).json({ message: "Failed to save token" });
+  }
+});
+
+
+router.get("/test-notification/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user || !user.fcmToken) {
+      return res.status(404).json({
+        message: "FCM token not found",
+      });
+    }
+
+    await getMessaging().send({
+      token: user.fcmToken,
+      notification: {
+        title: "ChatSphere",
+        body: "Push Notification Test 🚀",
+      },
+    });
+
+    res.json({
+      success: true,
+      message: "Notification sent",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "Notification failed",
+    });
   }
 });
 
