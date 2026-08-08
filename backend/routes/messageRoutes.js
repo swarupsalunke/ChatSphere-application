@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const Message = require("../models/Message");
+const User = require("../models/User");
+const { getMessaging } = require("../config/firebaseAdmin");
 
 // 🔥 SEND MESSAGE (UPDATED)
 router.post("/", async (req, res) => {
@@ -13,11 +15,11 @@ router.post("/", async (req, res) => {
       replyTo,
     } = req.body;
 
-    // basic validation
     if (!sender || !receiver) {
       return res.status(400).json({ message: "Missing fields" });
     }
 
+    // Save message
     const newMessage = await Message.create({
       sender,
       receiver,
@@ -26,12 +28,47 @@ router.post("/", async (req, res) => {
       replyTo,
     });
 
+    // Get receiver and sender information
+    const receiverUser = await User.findById(receiver);
+    const senderUser = await User.findById(sender);
+
+    // Send FCM notification if receiver has a token
+    if (receiverUser?.fcmToken) {
+      try {
+        // Count unread messages for receiver
+        const unreadCount = await Message.countDocuments({
+          receiver: receiver,
+          status: { $ne: "seen" },
+        });
+
+        await getMessaging().send({
+          token: receiverUser.fcmToken,
+
+          // Data-only payload
+          // Service worker will handle the notification
+          data: {
+            title: senderUser?.name || "New Message",
+            body: content || "📎 Sent you a file",
+            unreadCount: String(unreadCount),
+            url: "/chat",
+          },
+        });
+
+        console.log("FCM notification sent successfully");
+      } catch (fcmError) {
+        console.log("FCM notification error:", fcmError.message);
+      }
+    }
+
     res.json(newMessage);
+
   } catch (error) {
     console.log("SEND MESSAGE ERROR:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
+
+
 
 router.delete("/:id", async (req, res) => {
   try {
