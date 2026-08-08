@@ -389,6 +389,42 @@ const Chat = () => {
     dispatch(clearSelectedUser());
   };
 
+  
+
+  // ── BROWSER / ANDROID BACK BUTTON ──
+useEffect(() => {
+  const handleBrowserBack = () => {
+    // If settings is open, close settings first
+    if (showSettings) {
+      dispatch(closeSettings());
+      window.history.pushState(null, "", window.location.href);
+      return;
+    }
+
+    // If a chat is open, go back to contacts
+    if (selectedUser) {
+      handleBack();
+      window.history.pushState(null, "", window.location.href);
+      return;
+    }
+
+    // If already on contacts, allow normal browser back
+    window.history.back();
+  };
+
+  // Create a history entry so Back can be handled inside ChatSphere
+  window.history.pushState(null, "", window.location.href);
+
+  window.addEventListener("popstate", handleBrowserBack);
+
+  return () => {
+    window.removeEventListener("popstate", handleBrowserBack);
+  };
+}, [selectedUser, showSettings]);
+
+
+
+
   const handleLogout = () => {
     dispatch(logout());
     dispatch(resetChat());
