@@ -18,8 +18,47 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  self.registration.showNotification(payload.notification.title, {
-    body: payload.notification.body,
+  const title = payload.data?.title || "ChatSphere";
+  const body = payload.data?.body || "New message";
+  const unreadCount = Number(payload.data?.unreadCount || 1);
+
+  // Set app icon badge
+  if ("setAppBadge" in self.registration) {
+    self.registration.setAppBadge(unreadCount).catch(() => {});
+  }
+
+  self.registration.showNotification(title, {
+    body,
     icon: "/logo192.png",
+    badge: "/logo192.png",
+    tag: "chatsphere-message",
+    data: {
+      url: payload.data?.url || "/chat",
+    },
   });
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const urlToOpen =
+    event.notification.data?.url || "/chat";
+
+  event.waitUntil(
+    clients.matchAll({
+      type: "window",
+      includeUncontrolled: true,
+    }).then((clientList) => {
+      for (const client of clientList) {
+        if ("focus" in client) {
+          client.navigate(urlToOpen);
+          return client.focus();
+        }
+      }
+
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
 });
