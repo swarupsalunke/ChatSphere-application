@@ -9,6 +9,7 @@ const { getMessaging } = require("../config/firebaseAdmin");
 router.post("/register", async (req, res) => {
   try {
     const { name, phone, email, password } = req.body;
+    const normalizedPhone = String(phone).replace(/\D/g, "").slice(-10);
 
     if (!phone) {
       return res.status(400).json({
@@ -24,7 +25,9 @@ router.post("/register", async (req, res) => {
         .json({ message: "User already exists" });
     }
 
-    const phoneExists = await User.findOne({ phone });
+    const phoneExists = await User.findOne({
+  phone: normalizedPhone,
+});
 
     if (phoneExists) {
       return res.status(400).json({
@@ -37,7 +40,7 @@ router.post("/register", async (req, res) => {
 
     const user = await User.create({
       name,
-      phone,
+      phone: normalizedPhone,
       email,
       password: hashedPassword,
       profilePic: "", // 🔥 DEFAULT DP
@@ -119,8 +122,17 @@ router.post("/find-contacts", async (req, res) => {
 
     // Clean phone numbers
     const cleanedNumbers = phoneNumbers
-      .map((phone) => String(phone).replace(/\D/g, ""))
-      .filter(Boolean);
+  .map((phone) => {
+    let number = String(phone).replace(/\D/g, "");
+
+    // India country code remove
+    if (number.length === 12 && number.startsWith("91")) {
+      number = number.slice(2);
+    }
+
+    return number;
+  })
+  .filter((phone) => phone.length === 10);
 
     // Find only registered users
     const users = await User.find({
