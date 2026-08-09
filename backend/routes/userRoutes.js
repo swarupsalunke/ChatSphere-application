@@ -8,7 +8,13 @@ const { getMessaging } = require("../config/firebaseAdmin");
 // 🔥 REGISTER
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, phone, email, password } = req.body;
+
+    if (!phone) {
+      return res.status(400).json({
+        message: "Phone number is required",
+      });
+    }
 
     const userExists = await User.findOne({ email });
 
@@ -18,11 +24,20 @@ router.post("/register", async (req, res) => {
         .json({ message: "User already exists" });
     }
 
+    const phoneExists = await User.findOne({ phone });
+
+    if (phoneExists) {
+      return res.status(400).json({
+        message: "Phone number already registered",
+      });
+    }
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const user = await User.create({
       name,
+      phone,
       email,
       password: hashedPassword,
       profilePic: "", // 🔥 DEFAULT DP
@@ -31,15 +46,17 @@ router.post("/register", async (req, res) => {
     res.json({
       _id: user._id,
       name: user.name,
+      phone: user.phone,
       email: user.email,
       profilePic: user.profilePic,
-      fcmToken: user.fcmToken,  
+      fcmToken: user.fcmToken,
     });
 
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
   }
 });
+
 
 
 // 🔥 LOGIN
@@ -56,9 +73,10 @@ router.post("/login", async (req, res) => {
       res.json({
         _id: user._id,
         name: user.name,
+        phone: user.phone,
         email: user.email,
         profilePic: user.profilePic, // 🔥 RETURN DP
-        fcmToken: user.fcmToken,        
+        fcmToken: user.fcmToken,
       });
     } else {
       res
@@ -82,6 +100,48 @@ router.get("/", async (req, res) => {
     res.status(500).json({ message: "Server Error" });
   }
 });
+
+
+
+
+
+
+// 🔥 FIND CHATSPHERE USERS FROM PHONE CONTACTS
+router.post("/find-contacts", async (req, res) => {
+  try {
+    const { phoneNumbers } = req.body;
+
+    if (!Array.isArray(phoneNumbers)) {
+      return res.status(400).json({
+        message: "phoneNumbers must be an array",
+      });
+    }
+
+    // Clean phone numbers
+    const cleanedNumbers = phoneNumbers
+      .map((phone) => String(phone).replace(/\D/g, ""))
+      .filter(Boolean);
+
+    // Find only registered users
+    const users = await User.find({
+      phone: { $in: cleanedNumbers },
+    }).select("-password");
+
+    res.json(users);
+  } catch (error) {
+    console.log("FIND CONTACTS ERROR:", error);
+
+    res.status(500).json({
+      message: "Server Error",
+    });
+  }
+});
+
+
+
+
+
+
 
 
 // 🔥 UPDATE PROFILE
@@ -108,7 +168,7 @@ router.put("/profile/:id", async (req, res) => {
       name: updatedUser.name,
       email: updatedUser.email,
       profilePic: updatedUser.profilePic,
-      fcmToken: updatedUser.fcmToken,     
+      fcmToken: updatedUser.fcmToken,
     });
 
   } catch (error) {
