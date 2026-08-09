@@ -210,12 +210,12 @@ const Chat = () => {
   }, [showSettings, user]);
 
   // ── FETCH USERS ──
-  useEffect(() => {
-    if (!user) return;
-    API.get("/api/user").then(({ data }) => {
-      dispatch(setUsers(data.filter((u) => u._id !== user._id)));
-    });
-  }, [user]);
+  // useEffect(() => {
+  //   if (!user) return;
+  //   API.get("/api/user").then(({ data }) => {
+  //     dispatch(setUsers(data.filter((u) => u._id !== user._id)));
+  //   });
+  // }, [user]);
 
   // ── ONLINE USERS ──
   useEffect(() => {
