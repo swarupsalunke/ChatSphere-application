@@ -1090,19 +1090,48 @@ const Chat = () => {
 
 <button
   onClick={async () => {
-    const result = await getPhoneContacts();
+    try {
+      const result = await getPhoneContacts();
 
-    if (!result.supported) {
-      alert("Contact picker is not supported on this device/browser.");
-      return;
+      if (!result.supported) {
+        alert("Contact picker is not supported on this device/browser.");
+        return;
+      }
+
+      if (!result.phoneNumbers.length) {
+        alert("No phone numbers selected.");
+        return;
+      }
+
+      const { data } = await API.post("/api/user/find-contacts", {
+        phoneNumbers: result.phoneNumbers,
+      });
+
+      console.log("Matched ChatSphere users:", data);
+
+      dispatch(
+        setUsers(
+          data.filter((u) => u._id !== user._id)
+        )
+      );
+
+      toast.success(
+        `${data.length} ChatSphere contact${
+          data.length !== 1 ? "s" : ""
+        } found`
+      );
+    } catch (error) {
+      console.error("Find contacts error:", error);
+
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to find contacts"
+      );
     }
-
-    console.log("Selected phone numbers:", result.phoneNumbers);
   }}
 >
   Find Contacts
 </button>
-
           
 
           {/* User List */}
