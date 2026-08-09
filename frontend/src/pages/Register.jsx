@@ -6,7 +6,7 @@ import { User, Mail, Lock, Eye, EyeOff, MessageCircle } from "lucide-react";
 
 const Register = () => {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ name: "", phone: "", email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -19,6 +19,10 @@ const Register = () => {
 
     if (!form.name.trim()) {
       toast.error("Please enter your name");
+      return;
+    }
+    if (!form.phone.trim()) {
+      toast.error("Please enter your phone number");
       return;
     }
     if (!form.email.trim()) {
@@ -97,6 +101,29 @@ const Register = () => {
                 />
               </div>
             </div>
+
+
+
+
+
+            {/* Phone */}
+            <div className="auth-field">
+  <div className="auth-input-wrap">
+    <input
+      className="auth-input"
+      type="tel"
+      name="phone"
+      placeholder="Mobile Number"
+      value={form.phone}
+      onChange={handleChange}
+      maxLength={10}
+      autoComplete="tel"
+    />
+  </div>
+</div>
+
+
+
 
             {/* Email */}
             <div className="auth-field">

@@ -43,6 +43,8 @@ import {
 } from "../store/slices/uiSlice";
 import { setStatuses, addStatus, removeStatus } from "../store/slices/statusSlice";
 
+import { getPhoneContacts } from "../utils/contactPicker";
+
 // 🔑 Apni Giphy API key yahan dalo
 const gf = new GiphyFetch("2wRT5NpcbdhP1SMRIwnF6EtAi7Usawnx");
 
@@ -1084,6 +1086,24 @@ const Chat = () => {
               />
             </div>
           </div>
+
+
+<button
+  onClick={async () => {
+    const result = await getPhoneContacts();
+
+    if (!result.supported) {
+      alert("Contact picker is not supported on this device/browser.");
+      return;
+    }
+
+    console.log("Selected phone numbers:", result.phoneNumbers);
+  }}
+>
+  Find Contacts
+</button>
+
+          
 
           {/* User List */}
           <div className="user-list">
